@@ -1,0 +1,54 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: #2d6a4f;
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-header-logo {
+  font-size: 24px;
+}
+
+.app-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.app-header-powered-by {
+  font-size: 12px;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 320px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.app-map-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+}

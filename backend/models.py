@@ -16,6 +16,8 @@ class WeatherConditions(BaseModel):
     wind_direction_deg: float
     precipitation_mm: float
     description: str
+    uv_index: float
+    humidity_pct: float
 
 
 class TrafficConditions(BaseModel):

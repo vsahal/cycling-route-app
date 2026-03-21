@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import './RouteForm.css'
 
 const SKILL_OPTIONS = [
   { value: 'beginner', label: 'Beginner' },
@@ -18,13 +19,13 @@ const TRAFFIC_OPTIONS = [
   { value: 'okay', label: 'Traffic is Fine' },
 ]
 
-export default function RouteForm({ onSubmit, loading }) {
+export default function RouteForm({ onSubmit, onLocationSelect, loading }) {
   const [form, setForm] = useState({
     location: '',
     skill_level: 'intermediate',
     hills: 'some_hills',
     traffic_pref: 'moderate',
-    distance_km: 30,
+    distance_miles: 20,
   })
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -44,7 +45,7 @@ export default function RouteForm({ onSubmit, loading }) {
           { headers: { 'User-Agent': 'CyclingRouteApp/1.0' } }
         )
         const data = await res.json()
-        setSuggestions(data.map((r) => r.display_name))
+        setSuggestions(data.map((r) => ({ name: r.display_name, lat: parseFloat(r.lat), lng: parseFloat(r.lon) })))
         setShowSuggestions(true)
       } catch {
         setSuggestions([])
@@ -54,28 +55,36 @@ export default function RouteForm({ onSubmit, loading }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: name === 'distance_km' ? Number(value) : value }))
+    setForm((prev) => ({ ...prev, [name]: name === 'distance_miles' ? Number(value) : value }))
   }
 
   const handleSuggestionClick = (suggestion) => {
-    setForm((prev) => ({ ...prev, location: suggestion }))
+    setForm((prev) => ({ ...prev, location: suggestion.name }))
     setSuggestions([])
     setShowSuggestions(false)
+    onLocationSelect?.(suggestion.lat, suggestion.lng)
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     setShowSuggestions(false)
-    onSubmit(form)
+    const { distance_miles, ...rest } = form
+    onSubmit({ ...rest, distance_km: Math.round(distance_miles * 1.60934) })
   }
 
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
-      <h2 style={styles.title}>Cycling Route Generator</h2>
+    <form onSubmit={handleSubmit} className="route-form">
+      {loading && (
+        <div className="form-overlay">
+          <div className="spinner" />
+          <span className="spinner-text">Generating route…</span>
+        </div>
+      )}
+      <h2 className="route-form-title">Cycling Route Generator</h2>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Starting Location</label>
-        <div style={{ position: 'relative' }}>
+      <div className="form-field">
+        <label className="form-label">Starting Location</label>
+        <div className="location-wrapper">
           <input
             name="location"
             value={form.location}
@@ -84,17 +93,13 @@ export default function RouteForm({ onSubmit, loading }) {
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="e.g. Central Park, New York"
             required
-            style={styles.input}
+            className="form-input"
           />
           {showSuggestions && suggestions.length > 0 && (
-            <ul style={styles.suggestions}>
+            <ul className="suggestions-list">
               {suggestions.map((s, i) => (
-                <li
-                  key={i}
-                  onMouseDown={() => handleSuggestionClick(s)}
-                  style={styles.suggestionItem}
-                >
-                  {s}
+                <li key={i} onMouseDown={() => handleSuggestionClick(s)} className="suggestion-item">
+                  {s.name}
                 </li>
               ))}
             </ul>
@@ -102,11 +107,11 @@ export default function RouteForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Skill Level</label>
-        <div style={styles.radioGroup}>
+      <div className="form-field">
+        <label className="form-label">Skill Level</label>
+        <div className="radio-group">
           {SKILL_OPTIONS.map((o) => (
-            <label key={o.value} style={styles.radioLabel}>
+            <label key={o.value} className="radio-label">
               <input
                 type="radio"
                 name="skill_level"
@@ -120,11 +125,11 @@ export default function RouteForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Terrain</label>
-        <div style={styles.radioGroup}>
+      <div className="form-field">
+        <label className="form-label">Terrain</label>
+        <div className="radio-group">
           {HILLS_OPTIONS.map((o) => (
-            <label key={o.value} style={styles.radioLabel}>
+            <label key={o.value} className="radio-label">
               <input
                 type="radio"
                 name="hills"
@@ -138,11 +143,11 @@ export default function RouteForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Traffic Preference</label>
-        <div style={styles.radioGroup}>
+      <div className="form-field">
+        <label className="form-label">Traffic Preference</label>
+        <div className="radio-group">
           {TRAFFIC_OPTIONS.map((o) => (
-            <label key={o.value} style={styles.radioLabel}>
+            <label key={o.value} className="radio-label">
               <input
                 type="radio"
                 name="traffic_pref"
@@ -156,123 +161,27 @@ export default function RouteForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Distance: {form.distance_km} km</label>
+      <div className="form-field">
+        <label className="form-label">Distance: {form.distance_miles} mi</label>
         <input
           type="range"
-          name="distance_km"
+          name="distance_miles"
           min={5}
-          max={150}
+          max={100}
           step={5}
-          value={form.distance_km}
+          value={form.distance_miles}
           onChange={handleChange}
-          style={styles.slider}
+          className="form-slider"
         />
-        <div style={styles.sliderLabels}>
-          <span>5 km</span>
-          <span>150 km</span>
+        <div className="slider-labels">
+          <span>5 mi</span>
+          <span>100 mi</span>
         </div>
       </div>
 
-      <button type="submit" disabled={loading} style={styles.button}>
+      <button type="submit" disabled={loading} className="submit-button">
         {loading ? 'Generating Route...' : 'Generate Route'}
       </button>
     </form>
   )
-}
-
-const styles = {
-  form: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 20,
-    width: 320,
-    flexShrink: 0,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: '#2d6a4f',
-  },
-  field: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#4a5568',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  input: {
-    border: '1px solid #e2e8f0',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 15,
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  radioGroup: {
-    display: 'flex',
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  radioLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    fontSize: 14,
-    cursor: 'pointer',
-  },
-  slider: {
-    width: '100%',
-    accentColor: '#2d6a4f',
-  },
-  sliderLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: 12,
-    color: '#718096',
-  },
-  suggestions: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    background: '#fff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 8,
-    marginTop: 4,
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-    zIndex: 100,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    maxHeight: 200,
-    overflowY: 'auto',
-  },
-  suggestionItem: {
-    padding: '8px 12px',
-    fontSize: 13,
-    cursor: 'pointer',
-    color: '#4a5568',
-    borderBottom: '1px solid #f0f0f0',
-  },
-  button: {
-    background: '#2d6a4f',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 8,
-    padding: '12px 0',
-    fontSize: 16,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'background 0.2s',
-  },
 }

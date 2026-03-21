@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet-polylinedecorator'
+import WeatherOverlay from './WeatherOverlay.jsx'
+import './MapView.css'
 
 function FlyToRoute({ center, geojson }) {
   const map = useMap()
 
   useEffect(() => {
     if (!geojson) return
-    // Fit map to route bounds
     const coords = geojson.features?.[0]?.geometry?.coordinates
     if (!coords || coords.length === 0) return
 
@@ -23,10 +26,70 @@ function FlyToRoute({ center, geojson }) {
   return null
 }
 
+function RouteArrows({ geojson }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!geojson) return
+    const coords = geojson.features?.[0]?.geometry?.coordinates
+    if (!coords || coords.length === 0) return
+
+    const latLngs = coords.map((c) => [c[1], c[0]])
+    const polyline = L.polyline(latLngs)
+    const decorator = L.polylineDecorator(polyline, {
+      patterns: [
+        {
+          offset: '10%',
+          repeat: '12%',
+          symbol: L.Symbol.arrowHead({
+            pixelSize: 10,
+            pathOptions: { color: '#2d6a4f', fillOpacity: 1, weight: 0 },
+          }),
+        },
+      ],
+    }).addTo(map)
+
+    return () => map.removeLayer(decorator)
+  }, [geojson, map])
+
+  return null
+}
+
 const AUSTIN = [30.2672, -97.7431]
 
-export default function MapView({ routeData }) {
+const WMO_DESCRIPTIONS = {
+  0: 'Clear sky', 1: 'Partly cloudy', 2: 'Partly cloudy', 3: 'Partly cloudy',
+  45: 'Foggy', 48: 'Foggy',
+  51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle',
+  61: 'Rain', 63: 'Rain', 65: 'Rain',
+  71: 'Snow', 73: 'Snow', 75: 'Snow',
+  80: 'Rain showers', 81: 'Rain showers', 82: 'Rain showers',
+  95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm',
+}
+
+async function fetchWeatherForCoords(lat, lng) {
+  const params = new URLSearchParams({
+    latitude: lat, longitude: lng,
+    current: 'temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,weathercode,uv_index,relative_humidity_2m',
+    wind_speed_unit: 'kmh', forecast_days: 1,
+  })
+  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
+  const data = await res.json()
+  const c = data.current
+  return {
+    temperature_c: c.temperature_2m,
+    wind_speed_kmh: c.wind_speed_10m,
+    wind_direction_deg: c.wind_direction_10m,
+    precipitation_mm: c.precipitation,
+    uv_index: c.uv_index,
+    humidity_pct: c.relative_humidity_2m,
+    description: WMO_DESCRIPTIONS[c.weathercode] ?? 'Unknown',
+  }
+}
+
+export default function MapView({ routeData, previewCoords }) {
   const [defaultCenter, setDefaultCenter] = useState(AUSTIN)
+  const [ambientWeather, setAmbientWeather] = useState(null)
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -35,18 +98,26 @@ export default function MapView({ routeData }) {
     )
   }, [])
 
-  const center = routeData?.start_coords
-    ? [routeData.start_coords[0], routeData.start_coords[1]]
-    : defaultCenter
+  const activeCenter = routeData?.start_coords
+    ?? previewCoords
+    ?? defaultCenter
 
-  const routeStyle = {
-    color: '#2d6a4f',
-    weight: 5,
-    opacity: 0.85,
-  }
+  useEffect(() => {
+    if (routeData?.conditions?.weather) return
+    fetchWeatherForCoords(activeCenter[0], activeCenter[1])
+      .then(setAmbientWeather)
+      .catch(() => {})
+  }, [activeCenter, routeData])
+
+  const center = activeCenter
+  const weather = routeData?.conditions?.weather ?? ambientWeather
+  const traffic = routeData?.conditions?.traffic ?? null
+
+  const routeStyle = { color: '#2d6a4f', weight: 5, opacity: 0.85 }
 
   return (
-    <div style={styles.container}>
+    <div className="map-container">
+      <WeatherOverlay weather={weather} traffic={traffic} />
       <MapContainer
         key={center.join(',')}
         center={center}
@@ -62,6 +133,7 @@ export default function MapView({ routeData }) {
           <>
             <GeoJSON data={routeData.route_geojson} style={routeStyle} />
             <FlyToRoute center={center} geojson={routeData.route_geojson} />
+            <RouteArrows geojson={routeData.route_geojson} />
           </>
         )}
 
@@ -75,14 +147,4 @@ export default function MapView({ routeData }) {
       </MapContainer>
     </div>
   )
-}
-
-const styles = {
-  container: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    minHeight: 400,
-  },
 }

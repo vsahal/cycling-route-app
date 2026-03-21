@@ -1,0 +1,61 @@
+.weather-overlay {
+  position: absolute;
+  bottom: 24px;
+  right: 12px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  pointer-events: none;
+}
+
+.weather-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d6a4f;
+  margin-bottom: 8px;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.weather-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-metric--full {
+  grid-column: span 2;
+}
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.wind-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.traffic-light { color: #48bb78; }
+.traffic-moderate { color: #ecc94b; }
+.traffic-heavy { color: #e53e3e; }
+.traffic-unknown { color: #718096; }

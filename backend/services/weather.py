@@ -24,6 +24,8 @@ async def fetch_weather(lat: float, lng: float) -> WeatherConditions:
             "wind_direction_10m",
             "precipitation",
             "weathercode",
+            "uv_index",
+            "relative_humidity_2m",
         ],
         "wind_speed_unit": "kmh",
         "forecast_days": 1,
@@ -40,6 +42,8 @@ async def fetch_weather(lat: float, lng: float) -> WeatherConditions:
     wind_dir = current["wind_direction_10m"]
     precip = current["precipitation"]
     wcode = current["weathercode"]
+    uv_index = current["uv_index"]
+    humidity = current["relative_humidity_2m"]
 
     description = _weather_code_to_description(wcode, precip)
 
@@ -49,6 +53,8 @@ async def fetch_weather(lat: float, lng: float) -> WeatherConditions:
         wind_direction_deg=wind_dir,
         precipitation_mm=precip,
         description=description,
+        uv_index=uv_index,
+        humidity_pct=humidity,
     )
 
 

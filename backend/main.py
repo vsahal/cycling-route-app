@@ -2,6 +2,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
+KM_PER_MILE = 1.60934
+
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 from fastapi import FastAPI, HTTPException
@@ -71,10 +73,13 @@ async def generate_route(request: RouteRequest):
         )
 
     # 5. Build AI summary
+    distance_miles = request.distance_km / KM_PER_MILE
+    temp_f = weather.temperature_c * 9 / 5 + 32
+    wind_mph = weather.wind_speed_kmh / KM_PER_MILE
     summary_parts = [
-        f"A {request.distance_km:.0f} km cycling loop from {request.location}.",
-        f"Conditions: {weather.description}, {weather.temperature_c:.1f}°C, "
-        f"wind {weather.wind_speed_kmh:.0f} km/h.",
+        f"A {distance_miles:.0f} mile cycling loop from {request.location}.",
+        f"Conditions: {weather.description}, {temp_f:.1f}°F, "
+        f"wind {wind_mph:.0f} mph.",
         f"Traffic: {traffic.congestion_level}.",
     ]
     ai_summary = " ".join(summary_parts)
