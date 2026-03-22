@@ -1,24 +1,24 @@
-import './WeatherOverlay.css'
+import "./WeatherOverlay.css";
 
-const KM_PER_MILE = 1.60934
+const KM_PER_MILE = 1.60934;
 
 function uvLabel(uv) {
-  if (uv <= 2) return { label: 'Low', color: '#48bb78' }
-  if (uv <= 5) return { label: 'Moderate', color: '#ecc94b' }
-  if (uv <= 7) return { label: 'High', color: '#ed8936' }
-  if (uv <= 10) return { label: 'Very High', color: '#e53e3e' }
-  return { label: 'Extreme', color: '#805ad5' }
+  if (uv <= 2) return { label: "Low", color: "#48bb78" };
+  if (uv <= 5) return { label: "Moderate", color: "#ecc94b" };
+  if (uv <= 7) return { label: "High", color: "#ed8936" };
+  if (uv <= 10) return { label: "Very High", color: "#e53e3e" };
+  return { label: "Extreme", color: "#805ad5" };
 }
 
 export default function WeatherOverlay({ weather, traffic }) {
-  if (!weather) return null
+  if (!weather) return null;
 
-  const tempF = ((weather.temperature_c * 9) / 5 + 32).toFixed(1)
-  const windMph = (weather.wind_speed_kmh / KM_PER_MILE).toFixed(0)
-  const uv = uvLabel(weather.uv_index)
+  const tempF = ((weather.temperature_c * 9) / 5 + 32).toFixed(1);
+  const windMph = (weather.wind_speed_kmh / KM_PER_MILE).toFixed(0);
+  const uv = uvLabel(weather.uv_index);
 
   // Arrow points in the direction wind is blowing toward (from + 180°)
-  const arrowRotation = (weather.wind_direction_deg + 180) % 360
+  const arrowRotation = (weather.wind_direction_deg + 180) % 360;
 
   return (
     <div className="weather-overlay">
@@ -50,8 +50,11 @@ export default function WeatherOverlay({ weather, traffic }) {
         {traffic && (
           <div className="weather-metric">
             <span className="metric-label">Traffic</span>
-            <span className={`metric-value traffic-${traffic.congestion_level}`}>
-              {traffic.congestion_level.charAt(0).toUpperCase() + traffic.congestion_level.slice(1)}
+            <span
+              className={`metric-value traffic-${traffic.congestion_level}`}
+            >
+              {traffic.congestion_level.charAt(0).toUpperCase() +
+                traffic.congestion_level.slice(1)}
             </span>
           </div>
         )}
@@ -63,7 +66,10 @@ export default function WeatherOverlay({ weather, traffic }) {
               width="18"
               height="18"
               viewBox="0 0 24 24"
-              style={{ transform: `rotate(${arrowRotation}deg)`, flexShrink: 0 }}
+              style={{
+                transform: `rotate(${arrowRotation}deg)`,
+                flexShrink: 0,
+              }}
             >
               <path
                 d="M12 2 L12 22 M12 2 L6 10 M12 2 L18 10"
@@ -76,8 +82,7 @@ export default function WeatherOverlay({ weather, traffic }) {
             <span className="metric-value">{windMph} mph</span>
           </div>
         </div>
-
       </div>
     </div>
-  )
+  );
 }

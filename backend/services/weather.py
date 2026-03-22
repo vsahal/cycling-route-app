@@ -1,16 +1,6 @@
 import httpx
 from models import WeatherConditions
 
-WIND_DIRECTIONS = [
-    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
-]
-
-
-def _deg_to_compass(deg: float) -> str:
-    idx = round(deg / 22.5) % 16
-    return WIND_DIRECTIONS[idx]
-
 
 async def fetch_weather(lat: float, lng: float) -> WeatherConditions:
     """Fetch current weather and wind from Open-Meteo."""

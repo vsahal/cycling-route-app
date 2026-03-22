@@ -1,11 +1,11 @@
-import './RouteSummary.css'
+import "./RouteSummary.css";
 
-const METERS_PER_MILE = 1609.344
-const KM_PER_MILE = 1.60934
+const METERS_PER_MILE = 1609.344;
+const KM_PER_MILE = 1.60934;
 
-const toMiles = (meters) => (meters / METERS_PER_MILE).toFixed(1)
-const toF = (c) => ((c * 9) / 5 + 32).toFixed(1)
-const toMph = (kmh) => (kmh / KM_PER_MILE).toFixed(0)
+const toMiles = (meters) => (meters / METERS_PER_MILE).toFixed(1);
+const toF = (c) => ((c * 9) / 5 + 32).toFixed(1);
+const toMph = (kmh) => (kmh / KM_PER_MILE).toFixed(0);
 
 export default function RouteSummary({ routeData, error }) {
   if (error) {
@@ -14,7 +14,7 @@ export default function RouteSummary({ routeData, error }) {
         <h3 className="summary-error-title">Error</h3>
         <p className="summary-text">{error}</p>
       </div>
-    )
+    );
   }
 
   if (!routeData) {
@@ -22,15 +22,15 @@ export default function RouteSummary({ routeData, error }) {
       <div className="summary-card summary-card--empty">
         <p>Fill in your preferences and click Generate Route to get started.</p>
       </div>
-    )
+    );
   }
 
-  const { ai_summary, reasoning, conditions, route_geojson } = routeData
-  const distance = route_geojson?.features?.[0]?.properties?.summary?.distance
-  const duration = route_geojson?.features?.[0]?.properties?.summary?.duration
+  const { ai_summary, reasoning, conditions, route_geojson } = routeData;
+  const distance = route_geojson?.features?.[0]?.properties?.summary?.distance;
+  const duration = route_geojson?.features?.[0]?.properties?.summary?.duration;
 
-  const w = conditions?.weather
-  const t = conditions?.traffic
+  const w = conditions?.weather;
+  const t = conditions?.traffic;
 
   return (
     <div className="summary-card">
@@ -49,7 +49,9 @@ export default function RouteSummary({ routeData, error }) {
           {duration && (
             <div className="stat">
               <span className="stat-label">Est. Time</span>
-              <span className="stat-value">{Math.round(duration / 60)} min</span>
+              <span className="stat-value">
+                {Math.round(duration / 60)} min
+              </span>
             </div>
           )}
         </div>
@@ -61,7 +63,6 @@ export default function RouteSummary({ routeData, error }) {
           <p className="summary-text">{reasoning}</p>
         </div>
       )}
-
     </div>
-  )
+  );
 }

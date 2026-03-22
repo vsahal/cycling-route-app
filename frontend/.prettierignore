@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Cache
+.cache
+.parcel-cache
+.vite
+
+# Coverage
+coverage
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# Auto-generated
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

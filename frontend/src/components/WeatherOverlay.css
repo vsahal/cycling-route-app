@@ -55,7 +55,15 @@
   gap: 6px;
 }
 
-.traffic-light { color: #48bb78; }
-.traffic-moderate { color: #ecc94b; }
-.traffic-heavy { color: #e53e3e; }
-.traffic-unknown { color: #718096; }
+.traffic-light {
+  color: #48bb78;
+}
+.traffic-moderate {
+  color: #ecc94b;
+}
+.traffic-heavy {
+  color: #e53e3e;
+}
+.traffic-unknown {
+  color: #718096;
+}
