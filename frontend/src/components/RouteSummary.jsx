@@ -7,6 +7,48 @@ const toMiles = (meters) => (meters / METERS_PER_MILE).toFixed(1);
 const toF = (c) => ((c * 9) / 5 + 32).toFixed(1);
 const toMph = (kmh) => (kmh / KM_PER_MILE).toFixed(0);
 
+function buildGpx(routeData) {
+  const coords =
+    routeData.route_geojson?.features?.[0]?.geometry?.coordinates ?? [];
+  const now = new Date().toISOString();
+
+  const trkpts = coords
+    .map(([lng, lat, ele]) => {
+      const eleTag =
+        ele != null ? `\n        <ele>${ele.toFixed(1)}</ele>` : "";
+      return `      <trkpt lat="${lat}" lon="${lng}">${eleTag}\n      </trkpt>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Cycling Route Generator"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Cycling Route</name>
+    <time>${now}</time>
+  </metadata>
+  <trk>
+    <name>Cycling Route</name>
+    <trkseg>
+${trkpts}
+    </trkseg>
+  </trk>
+</gpx>`;
+}
+
+function downloadGpx(routeData) {
+  const gpx = buildGpx(routeData);
+  const blob = new Blob([gpx], { type: "application/gpx+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "cycling-route.gpx";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function RouteSummary({ routeData, error }) {
   if (error) {
     return (
@@ -63,6 +105,15 @@ export default function RouteSummary({ routeData, error }) {
           <p className="summary-text">{reasoning}</p>
         </div>
       )}
+
+      <div className="summary-section">
+        <button
+          className="gpx-download-btn"
+          onClick={() => downloadGpx(routeData)}
+        >
+          Download GPX
+        </button>
+      </div>
     </div>
   );
 }
