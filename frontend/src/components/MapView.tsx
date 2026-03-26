@@ -10,6 +10,8 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
+import { reverseGeocode } from "../api/geocoding.ts";
+import { fetchWeather } from "../api/weather.ts";
 import type { RouteResponse, WeatherConditions } from "../types.ts";
 import "./MapView.css";
 import WeatherOverlay from "./WeatherOverlay.tsx";
@@ -68,12 +70,8 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
     click: async (e) => {
       const { lat, lng } = e.latlng;
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          { headers: { "User-Agent": "CyclingRouteApp/1.0" } },
-        );
-        const data = await res.json();
-        onMapClick(lat, lng, data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        const address = await reverseGeocode(lat, lng);
+        onMapClick(lat, lng, address);
       } catch {
         onMapClick(lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
@@ -83,53 +81,6 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 }
 
 const AUSTIN: [number, number] = [30.2672, -97.7431];
-
-const WMO_DESCRIPTIONS: Record<number, string> = {
-  0: "Clear sky",
-  1: "Partly cloudy",
-  2: "Partly cloudy",
-  3: "Partly cloudy",
-  45: "Foggy",
-  48: "Foggy",
-  51: "Drizzle",
-  53: "Drizzle",
-  55: "Drizzle",
-  61: "Rain",
-  63: "Rain",
-  65: "Rain",
-  71: "Snow",
-  73: "Snow",
-  75: "Snow",
-  80: "Rain showers",
-  81: "Rain showers",
-  82: "Rain showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm",
-  99: "Thunderstorm",
-};
-
-async function fetchWeatherForCoords(lat: number, lng: number): Promise<WeatherConditions> {
-  const params = new URLSearchParams({
-    latitude: String(lat),
-    longitude: String(lng),
-    current:
-      "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,weathercode,uv_index,relative_humidity_2m",
-    wind_speed_unit: "kmh",
-    forecast_days: "1",
-  });
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
-  const data = await res.json();
-  const c = data.current;
-  return {
-    temperature_c: c.temperature_2m,
-    wind_speed_kmh: c.wind_speed_10m,
-    wind_direction_deg: c.wind_direction_10m,
-    precipitation_mm: c.precipitation,
-    uv_index: c.uv_index,
-    humidity_pct: c.relative_humidity_2m,
-    description: WMO_DESCRIPTIONS[c.weathercode as number] ?? "Unknown",
-  };
-}
 
 interface Props {
   routeData: RouteResponse | null;
@@ -154,7 +105,7 @@ export default function MapView({ routeData, previewCoords, onMapClick, clickedC
 
   useEffect(() => {
     if (routeData?.conditions?.weather) return;
-    fetchWeatherForCoords(activeCenter[0], activeCenter[1])
+    fetchWeather(activeCenter[0], activeCenter[1])
       .then(setAmbientWeather)
       .catch(() => {});
   }, [activeCenter, routeData]);

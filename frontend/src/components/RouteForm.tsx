@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { searchLocation } from "../api/geocoding.ts";
+import type { LocationSuggestion } from "../api/geocoding.ts";
 import type { Hills, RouteFormData, SelectedLocation, SkillLevel, TrafficPref } from "../types.ts";
 import "./RouteForm.css";
 
@@ -19,12 +21,6 @@ const TRAFFIC_OPTIONS: { value: TrafficPref; label: string }[] = [
   { value: "moderate", label: "Moderate" },
   { value: "okay", label: "Traffic is Fine" },
 ];
-
-interface LocationSuggestion {
-  name: string;
-  lat: number;
-  lng: number;
-}
 
 interface FormState {
   location: string;
@@ -70,18 +66,8 @@ export default function RouteForm({ onSubmit, onLocationSelect, loading, selecte
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
-          { headers: { "User-Agent": "CyclingRouteApp/1.0" } },
-        );
-        const data = await res.json();
-        setSuggestions(
-          data.map((r: { display_name: string; lat: string; lon: string }) => ({
-            name: r.display_name,
-            lat: parseFloat(r.lat),
-            lng: parseFloat(r.lon),
-          })),
-        );
+        const results = await searchLocation(query);
+        setSuggestions(results);
         setShowSuggestions(true);
       } catch {
         setSuggestions([]);

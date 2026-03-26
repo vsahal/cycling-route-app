@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { generateRoute } from "./api/routes.ts";
 import MapView from "./components/MapView.tsx";
 import RouteForm from "./components/RouteForm.tsx";
 import RouteSummary from "./components/RouteSummary.tsx";
@@ -18,18 +19,7 @@ export default function App() {
     setRouteData(null);
 
     try {
-      const response = await fetch("/api/generate-route", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || "Failed to generate route");
-      }
-
-      const data: RouteResponse = await response.json();
+      const data = await generateRoute(formData);
       setRouteData(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "An unexpected error occurred");
