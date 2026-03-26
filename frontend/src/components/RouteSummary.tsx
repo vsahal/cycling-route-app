@@ -1,15 +1,16 @@
+import type { RouteResponse } from "../types.ts";
 import "./RouteSummary.css";
 
 const METERS_PER_MILE = 1609.344;
 const KM_PER_MILE = 1.60934;
 
-const toMiles = (meters) => (meters / METERS_PER_MILE).toFixed(1);
-const toF = (c) => ((c * 9) / 5 + 32).toFixed(1);
-const toMph = (kmh) => (kmh / KM_PER_MILE).toFixed(0);
+const toMiles = (meters: number) => (meters / METERS_PER_MILE).toFixed(1);
+const toMph = (kmh: number) => (kmh / KM_PER_MILE).toFixed(0);
 
-function buildGpx(routeData) {
+function buildGpx(routeData: RouteResponse): string {
   const coords =
-    routeData.route_geojson?.features?.[0]?.geometry?.coordinates ?? [];
+    (routeData.route_geojson?.features?.[0]?.geometry as { coordinates?: number[][] } | null)
+      ?.coordinates ?? [];
   const now = new Date().toISOString();
 
   const trkpts = coords
@@ -38,7 +39,7 @@ ${trkpts}
 </gpx>`;
 }
 
-function downloadGpx(routeData) {
+function downloadGpx(routeData: RouteResponse): void {
   const gpx = buildGpx(routeData);
   const blob = new Blob([gpx], { type: "application/gpx+xml" });
   const url = URL.createObjectURL(blob);
@@ -49,7 +50,12 @@ function downloadGpx(routeData) {
   URL.revokeObjectURL(url);
 }
 
-export default function RouteSummary({ routeData, error }) {
+interface Props {
+  routeData: RouteResponse | null;
+  error: string | null;
+}
+
+export default function RouteSummary({ routeData, error }: Props) {
   if (error) {
     return (
       <div className="summary-card summary-card--error">
@@ -68,8 +74,9 @@ export default function RouteSummary({ routeData, error }) {
   }
 
   const { ai_summary, reasoning, conditions, route_geojson } = routeData;
-  const distance = route_geojson?.features?.[0]?.properties?.summary?.distance;
-  const duration = route_geojson?.features?.[0]?.properties?.summary?.duration;
+  const summary = (route_geojson?.features?.[0]?.properties as Record<string, { distance?: number; duration?: number }> | null)?.summary;
+  const distance = summary?.distance;
+  const duration = summary?.duration;
 
   const w = conditions?.weather;
   const t = conditions?.traffic;

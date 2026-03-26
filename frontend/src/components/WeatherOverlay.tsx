@@ -1,8 +1,9 @@
+import type { TrafficConditions, WeatherConditions } from "../types.ts";
 import "./WeatherOverlay.css";
 
 const KM_PER_MILE = 1.60934;
 
-function uvLabel(uv) {
+function uvLabel(uv: number): { label: string; color: string } {
   if (uv <= 2) return { label: "Low", color: "#48bb78" };
   if (uv <= 5) return { label: "Moderate", color: "#ecc94b" };
   if (uv <= 7) return { label: "High", color: "#ed8936" };
@@ -10,7 +11,12 @@ function uvLabel(uv) {
   return { label: "Extreme", color: "#805ad5" };
 }
 
-export default function WeatherOverlay({ weather, traffic }) {
+interface Props {
+  weather: WeatherConditions | null | undefined;
+  traffic: TrafficConditions | null | undefined;
+}
+
+export default function WeatherOverlay({ weather, traffic }: Props) {
   if (!weather) return null;
 
   const tempF = ((weather.temperature_c * 9) / 5 + 32).toFixed(1);

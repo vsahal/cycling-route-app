@@ -1,35 +1,57 @@
 import { useState, useEffect, useRef } from "react";
+import type { Hills, RouteFormData, SelectedLocation, SkillLevel, TrafficPref } from "../types.ts";
 import "./RouteForm.css";
 
-const SKILL_OPTIONS = [
+const SKILL_OPTIONS: { value: SkillLevel; label: string }[] = [
   { value: "beginner", label: "Beginner" },
   { value: "intermediate", label: "Intermediate" },
   { value: "advanced", label: "Advanced" },
 ];
 
-const HILLS_OPTIONS = [
+const HILLS_OPTIONS: { value: Hills; label: string }[] = [
   { value: "flat", label: "Flat" },
   { value: "some_hills", label: "Some Hills" },
   { value: "hilly", label: "Hilly" },
 ];
 
-const TRAFFIC_OPTIONS = [
+const TRAFFIC_OPTIONS: { value: TrafficPref; label: string }[] = [
   { value: "avoid", label: "Avoid Traffic" },
   { value: "moderate", label: "Moderate" },
   { value: "okay", label: "Traffic is Fine" },
 ];
 
-export default function RouteForm({ onSubmit, onLocationSelect, loading, selectedLocation }) {
-  const [form, setForm] = useState({
+interface LocationSuggestion {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+interface FormState {
+  location: string;
+  skill_level: SkillLevel;
+  hills: Hills;
+  traffic_pref: TrafficPref;
+  distance_miles: number;
+}
+
+interface Props {
+  onSubmit: (data: RouteFormData) => void;
+  onLocationSelect?: (lat: number, lng: number) => void;
+  loading: boolean;
+  selectedLocation: SelectedLocation | null;
+}
+
+export default function RouteForm({ onSubmit, onLocationSelect, loading, selectedLocation }: Props) {
+  const [form, setForm] = useState<FormState>({
     location: "",
     skill_level: "intermediate",
     hills: "some_hills",
     traffic_pref: "moderate",
     distance_miles: 20,
   });
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!selectedLocation) return;
@@ -45,7 +67,7 @@ export default function RouteForm({ onSubmit, onLocationSelect, loading, selecte
       setSuggestions([]);
       return;
     }
-    clearTimeout(debounceRef.current);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
@@ -54,7 +76,7 @@ export default function RouteForm({ onSubmit, onLocationSelect, loading, selecte
         );
         const data = await res.json();
         setSuggestions(
-          data.map((r) => ({
+          data.map((r: { display_name: string; lat: string; lon: string }) => ({
             name: r.display_name,
             lat: parseFloat(r.lat),
             lng: parseFloat(r.lon),
@@ -67,22 +89,22 @@ export default function RouteForm({ onSubmit, onLocationSelect, loading, selecte
     }, 300);
   }, [form.location]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: name === "distance_miles" ? Number(value) : value,
-    }));
+    } as FormState));
   };
 
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = (suggestion: LocationSuggestion) => {
     setForm((prev) => ({ ...prev, location: suggestion.name }));
     setSuggestions([]);
     setShowSuggestions(false);
     onLocationSelect?.(suggestion.lat, suggestion.lng);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
     const { distance_miles, ...rest } = form;

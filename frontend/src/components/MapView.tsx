@@ -10,20 +10,20 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
+import type { RouteResponse, WeatherConditions } from "../types.ts";
 import "./MapView.css";
-import WeatherOverlay from "./WeatherOverlay.jsx";
+import WeatherOverlay from "./WeatherOverlay.tsx";
 
-function FlyToRoute({ center, geojson }) {
+function FlyToRoute({ geojson }: { geojson: RouteResponse["route_geojson"] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!geojson) return;
-    const coords = geojson.features?.[0]?.geometry?.coordinates;
-    if (!coords || coords.length === 0) return;
+    const coords = geojson.features?.[0]?.geometry as { coordinates?: number[][] } | null;
+    if (!coords?.coordinates || coords.coordinates.length === 0) return;
 
-    const lats = coords.map((c) => c[1]);
-    const lngs = coords.map((c) => c[0]);
-    const bounds = [
+    const lats = coords.coordinates.map((c) => c[1]);
+    const lngs = coords.coordinates.map((c) => c[0]);
+    const bounds: [[number, number], [number, number]] = [
       [Math.min(...lats), Math.min(...lngs)],
       [Math.max(...lats), Math.max(...lngs)],
     ];
@@ -33,15 +33,14 @@ function FlyToRoute({ center, geojson }) {
   return null;
 }
 
-function RouteArrows({ geojson }) {
+function RouteArrows({ geojson }: { geojson: RouteResponse["route_geojson"] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!geojson) return;
-    const coords = geojson.features?.[0]?.geometry?.coordinates;
-    if (!coords || coords.length === 0) return;
+    const geom = geojson.features?.[0]?.geometry as { coordinates?: number[][] } | null;
+    if (!geom?.coordinates || geom.coordinates.length === 0) return;
 
-    const latLngs = coords.map((c) => [c[1], c[0]]);
+    const latLngs = geom.coordinates.map((c) => [c[1], c[0]] as [number, number]);
     const polyline = L.polyline(latLngs);
     const decorator = L.polylineDecorator(polyline, {
       patterns: [
@@ -56,13 +55,15 @@ function RouteArrows({ geojson }) {
       ],
     }).addTo(map);
 
-    return () => map.removeLayer(decorator);
+    return () => {
+      map.removeLayer(decorator);
+    };
   }, [geojson, map]);
 
   return null;
 }
 
-function MapClickHandler({ onMapClick }) {
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number, address: string) => void }) {
   useMapEvents({
     click: async (e) => {
       const { lat, lng } = e.latlng;
@@ -81,9 +82,9 @@ function MapClickHandler({ onMapClick }) {
   return null;
 }
 
-const AUSTIN = [30.2672, -97.7431];
+const AUSTIN: [number, number] = [30.2672, -97.7431];
 
-const WMO_DESCRIPTIONS = {
+const WMO_DESCRIPTIONS: Record<number, string> = {
   0: "Clear sky",
   1: "Partly cloudy",
   2: "Partly cloudy",
@@ -107,14 +108,14 @@ const WMO_DESCRIPTIONS = {
   99: "Thunderstorm",
 };
 
-async function fetchWeatherForCoords(lat, lng) {
+async function fetchWeatherForCoords(lat: number, lng: number): Promise<WeatherConditions> {
   const params = new URLSearchParams({
-    latitude: lat,
-    longitude: lng,
+    latitude: String(lat),
+    longitude: String(lng),
     current:
       "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,weathercode,uv_index,relative_humidity_2m",
     wind_speed_unit: "kmh",
-    forecast_days: 1,
+    forecast_days: "1",
   });
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
   const data = await res.json();
@@ -126,13 +127,20 @@ async function fetchWeatherForCoords(lat, lng) {
     precipitation_mm: c.precipitation,
     uv_index: c.uv_index,
     humidity_pct: c.relative_humidity_2m,
-    description: WMO_DESCRIPTIONS[c.weathercode] ?? "Unknown",
+    description: WMO_DESCRIPTIONS[c.weathercode as number] ?? "Unknown",
   };
 }
 
-export default function MapView({ routeData, previewCoords, onMapClick, clickedCoords }) {
-  const [defaultCenter, setDefaultCenter] = useState(AUSTIN);
-  const [ambientWeather, setAmbientWeather] = useState(null);
+interface Props {
+  routeData: RouteResponse | null;
+  previewCoords: [number, number] | null;
+  onMapClick?: (lat: number, lng: number, address: string) => void;
+  clickedCoords: [number, number] | null;
+}
+
+export default function MapView({ routeData, previewCoords, onMapClick, clickedCoords }: Props) {
+  const [defaultCenter, setDefaultCenter] = useState<[number, number]>(AUSTIN);
+  const [ambientWeather, setAmbientWeather] = useState<WeatherConditions | null>(null);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -141,7 +149,7 @@ export default function MapView({ routeData, previewCoords, onMapClick, clickedC
     );
   }, []);
 
-  const activeCenter =
+  const activeCenter: [number, number] =
     routeData?.start_coords ?? previewCoords ?? defaultCenter;
 
   useEffect(() => {
@@ -191,7 +199,7 @@ export default function MapView({ routeData, previewCoords, onMapClick, clickedC
         {routeData?.route_geojson && (
           <>
             <GeoJSON data={routeData.route_geojson} style={routeStyle} />
-            <FlyToRoute center={center} geojson={routeData.route_geojson} />
+            <FlyToRoute geojson={routeData.route_geojson} />
             <RouteArrows geojson={routeData.route_geojson} />
           </>
         )}

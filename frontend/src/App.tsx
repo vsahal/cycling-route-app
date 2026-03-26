@@ -1,17 +1,18 @@
 import { useState } from "react";
-import MapView from "./components/MapView.jsx";
-import RouteForm from "./components/RouteForm.jsx";
-import RouteSummary from "./components/RouteSummary.jsx";
+import MapView from "./components/MapView.tsx";
+import RouteForm from "./components/RouteForm.tsx";
+import RouteSummary from "./components/RouteSummary.tsx";
+import type { RouteFormData, RouteResponse, SelectedLocation } from "./types.ts";
 import "./App.css";
 
 export default function App() {
-  const [routeData, setRouteData] = useState(null);
+  const [routeData, setRouteData] = useState<RouteResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [previewCoords, setPreviewCoords] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [previewCoords, setPreviewCoords] = useState<[number, number] | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData: RouteFormData) => {
     setLoading(true);
     setError(null);
     setRouteData(null);
@@ -28,10 +29,10 @@ export default function App() {
         throw new Error(err.detail || "Failed to generate route");
       }
 
-      const data = await response.json();
+      const data: RouteResponse = await response.json();
       setRouteData(data);
     } catch (e) {
-      setError(e.message);
+      setError(e instanceof Error ? e.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
