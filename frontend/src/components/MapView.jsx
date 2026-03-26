@@ -8,6 +8,7 @@ import {
   MapContainer,
   TileLayer,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import "./MapView.css";
 import WeatherOverlay from "./WeatherOverlay.jsx";
@@ -61,6 +62,25 @@ function RouteArrows({ geojson }) {
   return null;
 }
 
+function MapClickHandler({ onMapClick }) {
+  useMapEvents({
+    click: async (e) => {
+      const { lat, lng } = e.latlng;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { "User-Agent": "CyclingRouteApp/1.0" } },
+        );
+        const data = await res.json();
+        onMapClick(lat, lng, data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      } catch {
+        onMapClick(lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      }
+    },
+  });
+  return null;
+}
+
 const AUSTIN = [30.2672, -97.7431];
 
 const WMO_DESCRIPTIONS = {
@@ -110,7 +130,7 @@ async function fetchWeatherForCoords(lat, lng) {
   };
 }
 
-export default function MapView({ routeData, previewCoords }) {
+export default function MapView({ routeData, previewCoords, onMapClick, clickedCoords }) {
   const [defaultCenter, setDefaultCenter] = useState(AUSTIN);
   const [ambientWeather, setAmbientWeather] = useState(null);
 
@@ -140,6 +160,9 @@ export default function MapView({ routeData, previewCoords }) {
   return (
     <div className="map-container">
       <WeatherOverlay weather={weather} traffic={traffic} />
+      {!routeData && (
+        <div className="map-click-hint">Click the map to set a start location</div>
+      )}
       <MapContainer
         key={center.join(",")}
         center={center}
@@ -150,6 +173,20 @@ export default function MapView({ routeData, previewCoords }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
+
+        {clickedCoords && !routeData?.start_coords && (
+          <CircleMarker
+            center={clickedCoords}
+            radius={10}
+            pathOptions={{
+              color: "#fff",
+              fillColor: "#e63946",
+              fillOpacity: 1,
+              weight: 2,
+            }}
+          />
+        )}
 
         {routeData?.route_geojson && (
           <>

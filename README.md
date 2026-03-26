@@ -19,10 +19,10 @@ Optional:
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-fastapi dev main.py --reload-dir .
+python3 -m venv .venv
+source .venv/bin/activate
+.venv/bin/pip install -r requirements.txt
+.venv/bin/fastapi dev main.py
 ```
 
 Backend runs at http://localhost:8000

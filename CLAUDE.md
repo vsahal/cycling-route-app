@@ -12,10 +12,10 @@ A full-stack cycling route generator that uses Gemini AI to propose loop waypoin
 
 ```bash
 cd backend
-python3 -m venv venv --clear
-source venv/bin/activate
-venv/bin/pip install -r requirements.txt
-venv/bin/fastapi dev main.py --reload-dir .
+python3 -m venv .venv --clear
+source .venv/bin/activate
+.venv/bin/pip install -r requirements.txt
+.venv/bin/fastapi dev main.py
 ```
 
 ### Frontend (React + Vite)

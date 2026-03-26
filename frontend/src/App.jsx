@@ -9,6 +9,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [previewCoords, setPreviewCoords] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleSubmit = async (formData) => {
     setLoading(true);
@@ -50,12 +51,21 @@ export default function App() {
             onSubmit={handleSubmit}
             onLocationSelect={(lat, lng) => setPreviewCoords([lat, lng])}
             loading={loading}
+            selectedLocation={selectedLocation}
           />
           <RouteSummary routeData={routeData} error={error} />
         </aside>
 
         <div className="app-map-area">
-          <MapView routeData={routeData} previewCoords={previewCoords} />
+          <MapView
+            routeData={routeData}
+            previewCoords={previewCoords}
+            clickedCoords={selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : null}
+            onMapClick={(lat, lng, address) => {
+              setSelectedLocation({ lat, lng, address });
+              setPreviewCoords([lat, lng]);
+            }}
+          />
         </div>
       </main>
     </div>

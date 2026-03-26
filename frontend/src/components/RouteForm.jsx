@@ -19,7 +19,7 @@ const TRAFFIC_OPTIONS = [
   { value: "okay", label: "Traffic is Fine" },
 ];
 
-export default function RouteForm({ onSubmit, onLocationSelect, loading }) {
+export default function RouteForm({ onSubmit, onLocationSelect, loading, selectedLocation }) {
   const [form, setForm] = useState({
     location: "",
     skill_level: "intermediate",
@@ -30,6 +30,14 @@ export default function RouteForm({ onSubmit, onLocationSelect, loading }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (!selectedLocation) return;
+    setForm((prev) => ({ ...prev, location: selectedLocation.address }));
+    onLocationSelect?.(selectedLocation.lat, selectedLocation.lng);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }, [selectedLocation]);
 
   useEffect(() => {
     const query = form.location.trim();

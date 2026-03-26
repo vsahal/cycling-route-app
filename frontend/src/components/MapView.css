@@ -12,3 +12,18 @@
   width: 100%;
   border-radius: 12px;
 }
+
+.map-click-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+}
