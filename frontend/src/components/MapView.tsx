@@ -87,9 +87,22 @@ interface Props {
   previewCoords: [number, number] | null;
   onMapClick?: (lat: number, lng: number, address: string) => void;
   clickedCoords: [number, number] | null;
+  darkMode?: boolean;
 }
 
-export default function MapView({ routeData, previewCoords, onMapClick, clickedCoords }: Props) {
+const TILES = {
+  light: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  dark: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+};
+
+export default function MapView({ routeData, previewCoords, onMapClick, clickedCoords, darkMode = false }: Props) {
   const [defaultCenter, setDefaultCenter] = useState<[number, number]>(AUSTIN);
   const [ambientWeather, setAmbientWeather] = useState<WeatherConditions | null>(null);
 
@@ -129,8 +142,9 @@ export default function MapView({ routeData, previewCoords, onMapClick, clickedC
         style={{ height: "100%", width: "100%", borderRadius: 12 }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={darkMode ? "dark" : "light"}
+          attribution={darkMode ? TILES.dark.attribution : TILES.light.attribution}
+          url={darkMode ? TILES.dark.url : TILES.light.url}
         />
         {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
 

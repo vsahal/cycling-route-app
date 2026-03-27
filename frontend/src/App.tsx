@@ -12,6 +12,13 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [previewCoords, setPreviewCoords] = useState<[number, number] | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDark = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+  };
 
   const handleSubmit = async (formData: RouteFormData) => {
     setLoading(true);
@@ -34,6 +41,9 @@ export default function App() {
         <span className="app-header-logo">🚴</span>
         <span className="app-header-title">Cycling Route Generator</span>
         <span className="app-header-powered-by">powered by AI</span>
+        <button className="dark-mode-toggle" onClick={toggleDark} aria-label="Toggle dark mode">
+          {darkMode ? "☀️" : "🌙"}
+        </button>
       </header>
 
       <main className="app-main">
@@ -52,6 +62,7 @@ export default function App() {
             routeData={routeData}
             previewCoords={previewCoords}
             clickedCoords={selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : null}
+            darkMode={darkMode}
             onMapClick={(lat, lng, address) => {
               setSelectedLocation({ lat, lng, address });
               setPreviewCoords([lat, lng]);
