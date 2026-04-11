@@ -12,8 +12,8 @@ export interface WeatherConditions {
 
 export interface TrafficConditions {
   congestion_level: "low" | "moderate" | "high" | "unknown";
-  current_speed_kmh?: number;
-  free_flow_speed_kmh?: number;
+  average_speed_kmh?: number;
+  description: string;
 }
 
 export interface RouteConditions {
